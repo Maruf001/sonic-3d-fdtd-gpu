@@ -1,11 +1,3 @@
-## Repository name
-
-**`sonic-3d-fdtd-gpu`**
-
----
-
-### `README.md`
-
 # sonic-3d-fdtd-gpu
 GPU-accelerated 3D acoustic FDTD (finite-difference time-domain) solver with **two backends**:
 - **OpenACC** (portable accelerator directives)
@@ -25,6 +17,7 @@ The core model solves the scalar acoustic wave equation in 3D on a staggered/reg
 ---
 
 ## Physics & numerics (brief)
+```bash
 We model the scalar acoustic pressure \(p(\mathbf{x},t)\):
 \[
 \frac{\partial^2 p}{\partial t^2} = c^2 \nabla^2 p + s(\mathbf{x},t),
@@ -33,6 +26,7 @@ with constant/variable sound speed \(c(\mathbf{x})\). Discretization:
 - Time: 2nd-order leapfrog (demo), \(\;p^{n+1} = 2p^n - p^{n-1} + \Delta t^2\, c^2 \nabla^2 p^n + \Delta t^2 s^n\)
 - Space: 7-point Laplacian stencil (demo). Optional 27-pt / higher order upcoming.
 - Stability: CFL \( \Delta t \le \frac{1}{c_{\max}}\left(\frac{1}{\frac{1}{\Delta x^2}+\frac{1}{\Delta y^2}+\frac{1}{\Delta z^2}}\right)^{1/2} \)
+````
 
 ---
 
