@@ -16,17 +16,42 @@ The core model solves the scalar acoustic wave equation in 3D on a staggered/reg
 
 ---
 
-## Physics & numerics (brief)
-```bash
-We model the scalar acoustic pressure \(p(\mathbf{x},t)\):
-\[
-\frac{\partial^2 p}{\partial t^2} = c^2 \nabla^2 p + s(\mathbf{x},t),
-\]
-with constant/variable sound speed \(c(\mathbf{x})\). Discretization:
-- Time: 2nd-order leapfrog (demo), \(\;p^{n+1} = 2p^n - p^{n-1} + \Delta t^2\, c^2 \nabla^2 p^n + \Delta t^2 s^n\)
-- Space: 7-point Laplacian stencil (demo). Optional 27-pt / higher order upcoming.
-- Stability: CFL \( \Delta t \le \frac{1}{c_{\max}}\left(\frac{1}{\frac{1}{\Delta x^2}+\frac{1}{\Delta y^2}+\frac{1}{\Delta z^2}}\right)^{1/2} \)
-````
+## Physics & numerics
+
+**Model (scalar acoustic pressure `p(x,t)`):**
+
+```
+∂²p/∂t² = c(x)² · ∇²p + s(x,t)
+```
+
+* `p` : acoustic pressure
+* `c(x)` : sound speed (can be constant or spatially varying)
+* `s(x,t)` : source term
+
+**Time discretization (2nd-order leapfrog, demo):**
+
+```
+p^{n+1} = 2·p^n − p^{n−1} + (Δt)² [ c² · (∇² p^n) + s^n ]
+```
+
+**Space discretization (7-point Laplacian stencil, demo):**
+
+```
+∇² p[i,j,k] ≈ ( p[i+1,j,k] − 2·p[i,j,k] + p[i−1,j,k] ) / Δx²
+            + ( p[i,j+1,k] − 2·p[i,j,k] + p[i,j−1,k] ) / Δy²
+            + ( p[i,j,k+1] − 2·p[i,j,k] + p[i,j,k−1] ) / Δz²
+```
+
+> Optional: 27-point / higher-order stencils coming soon.
+
+**CFL stability (Cartesian grid):**
+
+```
+Δt ≤ (1 / c_max) · sqrt( 1 / ( 1/Δx² + 1/Δy² + 1/Δz² ) )
+```
+
+* `c_max` is the maximum sound speed in the domain.
+* Use a safety factor (e.g., 0.9× the bound) in practice.
 
 ---
 
