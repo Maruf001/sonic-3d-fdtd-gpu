@@ -6,7 +6,6 @@
 
 ### `README.md`
 
-````markdown
 # sonic-3d-fdtd-gpu
 GPU-accelerated 3D acoustic FDTD (finite-difference time-domain) solver with **two backends**:
 - **OpenACC** (portable accelerator directives)
@@ -194,6 +193,4 @@ MIT (see `LICENSE`).
 ## Citation
 
 If this helps your research/product, please cite (see `CITATION.cff`), or star the repo to help others find it 🙏.
-
-````
 
