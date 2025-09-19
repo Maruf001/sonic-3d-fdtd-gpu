@@ -74,6 +74,7 @@ p^{n+1} = 2·p^n − p^{n−1} + (Δt)² [ c² · (∇² p^n) + s^n ]
 - Multiple kernel variants for performance comparison
 
 ### 3. Mixed Precision CUDA (`3_pde-fdtd_mixed/`)
+- **Author**: Abdullah Maruf
 - Three variants: v1, v2, v3 with different optimization strategies
 - FP16/FP32 mixed precision implementations
 - Advanced performance analysis including precision impact studies
@@ -207,7 +208,7 @@ sonic-3d-fdtd-gpu/
 * **Three complete implementations** with performance benchmarking:
   - OpenACC implementation by Dr. Ziyi Yin (KronosAI)
   - CUDA implementation by Abdullah Maruf  
-  - Mixed precision CUDA variants (v1, v2, v3)
+  - Mixed precision CUDA variants (v1, v2, v3) by Abdullah Maruf
 * **Comprehensive performance analysis** on A100 GPU hardware
 * **Automated benchmarking** across multiple grid sizes (64³ to 1024³)
 * **Memory usage profiling** and timing analysis
@@ -219,8 +220,7 @@ sonic-3d-fdtd-gpu/
 ## Authors & Contributors
 
 - **Dr. Ziyi Yin** (KronosAI) - OpenACC implementation
-- **Abdullah Maruf** - CUDA implementation with A100/TPU/L4 testing
-- **Mixed Precision Team** - FP16/FP32 optimization variants
+- **Abdullah Maruf** - CUDA implementation with A100/TPU/L4 testing and Mixed Precision FP16/FP32 optimization variants
 
 ## Contributing
 
