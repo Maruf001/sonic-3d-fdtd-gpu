@@ -1,0 +1,19 @@
+Grid Sizes: 64 128 256 512 1024
+Times: 0.004081 0.00941 0.05104 0.335519 2.61813
+Memories: 19 31 711 2575 17201
+
+Running for grid size 64^3
+Peak GPU Memory: 19 MiB
+Total Time: 0.004081 s
+Running for grid size 128^3
+Peak GPU Memory: 31 MiB
+Total Time: 0.00941 s
+Running for grid size 256^3
+Peak GPU Memory: 711 MiB
+Total Time: 0.05104 s
+Running for grid size 512^3
+Peak GPU Memory: 2575 MiB
+Total Time: 0.335519 s
+Running for grid size 1024^3
+Peak GPU Memory: 17201 MiB
+Total Time: 2.61813 s

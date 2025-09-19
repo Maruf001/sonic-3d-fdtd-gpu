@@ -1,18 +1,20 @@
 # sonic-3d-fdtd-gpu
-GPU-accelerated 3D acoustic FDTD (finite-difference time-domain) solver with **two backends**:
-- **OpenACC** (portable accelerator directives)
-- **CUDA** (hand-optimized kernels)
+GPU-accelerated 3D acoustic FDTD (finite-difference time-domain) solver with **three implementations**:
+- **OpenACC** (portable accelerator directives) - by Dr. Ziyi Yin (KronosAI)
+- **CUDA** (hand-optimized kernels) - by Abdullah Maruf
+- **Mixed Precision CUDA** (FP16/FP32 variants) - performance-optimized versions
 
-The core model solves the scalar acoustic wave equation in 3D on a staggered/regular grid with 2nd-order (demo) time-stepping and 6/7/27-point spatial stencils. The goal is a clear, didactic codebase that starts simple and then layers in practical GPU optimizations.
+The core model solves the scalar acoustic wave equation in 3D on a staggered/regular grid with 2nd-order time-stepping and spatial stencils. Each implementation includes performance benchmarks and analysis on A100 GPU hardware.
 
-> **Status**: Minimal working scaffold with both backends and a shared interface; baseline kernels + simple I/O. Ongoing work: higher-order stencils, absorbing boundaries (PML/CPML), multi-GPU halos, mixed precision, autotuning.
+> **Status**: Complete working implementations with performance analysis results. Includes timing comparisons, memory usage profiling, and visualization outputs across different grid sizes (64³ to 1024³).
 
 ---
 
 ## Why this repo
-- Compare **OpenACC vs CUDA** on the *same* numerical core.
-- Document a path from a naïve GPU port → memory-aware optimizations (blocking, shared-mem tiling, coalescing, L2 reuse, async copies).
-- Keep the numerics readable and the perf knobs explicit.
+- Compare **OpenACC vs CUDA vs Mixed Precision** implementations on the same numerical core
+- Performance analysis across different grid sizes with comprehensive benchmarking
+- Document GPU optimization strategies including memory-aware optimizations and mixed precision techniques
+- Practical performance results from A100 GPU testing
 
 ---
 
@@ -55,100 +57,102 @@ p^{n+1} = 2·p^n − p^{n−1} + (Δt)² [ c² · (∇² p^n) + s^n ]
 
 ---
 
-## Features implemented so far
-- **Common host driver** with interchangeable backends
-- **OpenACC** baseline parallel loops + data regions
-- **CUDA** baseline kernel (7-point) + pitch-linear layout
-- Simple **point source** and **Dirichlet/zero-flux** boundary options
-- Minimal binary output per snapshot (`.npy` or raw float32) via the Python runner
-- **Config file** for grid, timestep, source, snapshots
+## Implementations
 
-### Optimization work already started
-- SoA-style linear layout for coalesced reads
-- Optional restrict qualifiers, const device loads
-- CUDA: block-tiling in XY (demo), Z-sweep to exploit L2
-- OpenACC: `kernels`/`parallel` regions and `cache` hints (where supported)
+### 1. OpenACC Implementation (`1_pde-fdtd_openacc/`)
+- **Author**: Dr. Ziyi Yin (KronosAI)
+- Portable accelerator directives implementation
+- Performance results available for grid sizes 64³ to 1024³
+- Memory usage: 19 MiB (64³) to 17.2 GiB (1024³)
+- Execution time: 4ms (64³) to 2.6s (1024³)
 
-### Near-term roadmap
-- CPML/absorbing boundaries
-- Shared-memory tiled CUDA kernels with halo staging
-- Asynchronous IO/compute overlap
-- Mixed precision and fast-math gating
-- Multi-GPU domain decomposition (MPI + CUDA-aware)
-- Autotuner for block sizes / tile shapes
-- Higher-order stencils + dispersion analysis
+### 2. CUDA Implementation (`2_pde-fdtd_cuda/`)
+- **Author**: Abdullah Maruf
+- Hand-optimized CUDA kernels with basic and shared memory variants
+- Tested on A100 GPU, v6e1 TPU, L4 GPU (A100 gives highest performance)
+- Includes comprehensive performance analysis and visualization
+- Multiple kernel variants for performance comparison
+
+### 3. Mixed Precision CUDA (`3_pde-fdtd_mixed/`)
+- Three variants: v1, v2, v3 with different optimization strategies
+- FP16/FP32 mixed precision implementations
+- Advanced performance analysis including precision impact studies
+- Optimized for A100 GPU architecture
+
+## Performance Results
+Each implementation includes:
+- **Timing benchmarks** across multiple grid sizes
+- **Memory usage profiling** 
+- **Performance visualizations** (PNG plots)
+- **Comparative analysis** between basic and optimized variants
 
 ---
 
 ## Getting started
 
-### 1) Clone
+### Running the Implementations
+
+Each implementation is self-contained in its respective directory:
+
+**1. OpenACC Implementation**
 ```bash
-git clone https://github.com/<you>/sonic-3d-fdtd-gpu.git
-cd sonic-3d-fdtd-gpu
-````
-
-### 2) Build (CMake)
-
-You can build either backend with flags.
-
-**CUDA backend**
-
-```bash
-cmake -S . -B build -DUSE_CUDA=ON
-cmake --build build -j
+cd 1_pde-fdtd_openacc/
+# Compile
+bash 2_compile_openacc.sh
+# Run experiments
+bash 3i_exp1_openacc.sh
+bash 3ii_exp2_openacc.sh
+# Analyze results
+python 4_analysis_openacc.py
 ```
 
-**OpenACC backend (NVIDIA HPC SDK)**
-
+**2. CUDA Implementation** 
 ```bash
-# Ensure NVHPC is loaded, e.g., export CC=nvc CXX=nvc++ FC=nvfortran
-cmake -S . -B build -DUSE_OPENACC=ON
-cmake --build build -j
+cd 2_pde-fdtd_cuda/
+# Compile
+bash 2_compile_cuda.sh
+# Run experiments
+bash 3i_exp1_cuda.sh
+bash 3ii_exp2_cuda.sh
+# Analyze results
+python 4i_analysis1_cuda.py
+python 4ii_analysis2_cuda.py
 ```
 
-This produces:
-
-* `build/bin/sonic_fdtd_cuda` or
-* `build/bin/sonic_fdtd_openacc`
-
-### 3) Run a quick example
-
+**3. Mixed Precision CUDA**
 ```bash
-# small demo domain and a point source
-./build/bin/sonic_fdtd_cuda \
-  --nx 128 --ny 128 --nz 128 \
-  --dx 0.01 --dy 0.01 --dz 0.01 \
-  --dt 2.5e-6 --steps 2000 \
-  --c0 343.0 \
-  --src_x 64 --src_y 64 --src_z 64 \
-  --src_freq 1500 \
-  --snapshot_every 200 \
-  --out_dir out/cuda_demo
-
-# OpenACC variant
-./build/bin/sonic_fdtd_openacc <same flags>
+cd 3_pde-fdtd_mixed/
+# Compile
+bash 2_compile_cuda-mixed.sh
+# Run experiments
+bash 3i_exp1_mixed.sh
+# Analyze results
+python 4i_analysis1_mixed.py
+python 4ii_analysis2_mixed.py
+python 4iii_analysis2_mixed-fp16.py
 ```
 
-Or use the small Python wrapper for configs & visualization:
-
-```bash
-python3 python/runner.py --config examples/config.yaml
-```
+### Results
+Performance results and visualizations are automatically generated in the `results_gpu-a100/` subdirectories.
 
 ---
 
-## Command line flags
+## Implementation Details
 
-Run with `--help` for the full list. Common ones:
+Each implementation follows a similar structure:
 
-* `--nx --ny --nz` : grid size
-* `--dx --dy --dz` : spacings
-* `--dt --steps`   : time step (respect CFL) and iterations
-* `--c0`           : constant sound speed (m/s)
-* `--src_x/y/z`, `--src_freq` : point source location & frequency
-* `--snapshot_every` : dump cadence
-* `--out_dir`      : output path
+* **Source code**: Main FDTD implementation file
+* **Compilation script**: Automated build process
+* **Experiment scripts**: Standardized performance testing
+* **Analysis scripts**: Result processing and visualization
+
+### Grid Sizes Tested
+Performance benchmarks are conducted across five grid sizes:
+- 64³ (small)
+- 128³ (medium-small) 
+- 256³ (medium)
+- 512³ (large)
+- 1024³ (very large)
 
 ---
 
@@ -166,44 +170,61 @@ Run with `--help` for the full list. Common ones:
 
 ```
 sonic-3d-fdtd-gpu/
-├─ CMakeLists.txt
 ├─ README.md
 ├─ LICENSE
-├─ .gitignore
-├─ examples/
-│  ├─ config.yaml
-│  └─ run.sh
-├─ python/
-│  └─ runner.py
-├─ src/
-│  ├─ common/
-│  │  ├─ args.hpp
-│  │  └─ core.hpp
-│  ├─ cuda/
-│  │  ├─ main.cu
-│  │  └─ step.cu
-│  └─ openacc/
-│     ├─ main.c
-│     └─ step.h
-└─ docs/
-   └─ ROADMAP.md
+├─ 1_pde-fdtd_openacc/
+│  ├─ 1_pde-fdtd_openacc_by_ziyi-yin.cpp
+│  ├─ 2_compile_openacc.sh
+│  ├─ 3i_exp1_openacc.sh
+│  ├─ 3ii_exp2_openacc.sh
+│  ├─ 4_analysis_openacc.py
+│  └─ results_gpu-a100/
+├─ 2_pde-fdtd_cuda/
+│  ├─ 1_fdtd_cuda_by_abdullah.cu.cpp
+│  ├─ 2_compile_cuda.sh
+│  ├─ 3i_exp1_cuda.sh
+│  ├─ 3ii_exp2_cuda.sh
+│  ├─ 4i_analysis1_cuda.py
+│  ├─ 4ii_analysis2_cuda.py
+│  └─ results_gpu-a100/
+├─ 3_pde-fdtd_mixed/
+│  ├─ 1i_fdtd_cuda-mixed_v1.cu.cpp
+│  ├─ 1ii_fdtd_cuda-mixed_v2.cu.cpp
+│  ├─ 1iii_fdtd_cuda-mixed_v3.cu.cpp
+│  ├─ 2_compile_cuda-mixed.sh
+│  ├─ 3i_exp1_mixed.sh
+│  ├─ 4i_analysis1_mixed.py
+│  ├─ 4ii_analysis2_mixed.py
+│  ├─ 4iii_analysis2_mixed-fp16.py
+│  └─ results_gpu-a100/
+└─ env/
 ```
 
 ---
 
-## What’s been done (effort summary)
+## What's been accomplished
 
-* Baseline **OpenACC** port from CPU loops (parallel regions + persistent data)
-* Handwritten **CUDA** kernel with reasonable blocking & coalescing
-* Modest **numerical hygiene** (CFL checks, optional symmetry test)
-* **I/O**: snapshot dumps for quick sanity plots
-* Clear **separation** of numerics (stencil) from backend plumbing
+* **Three complete implementations** with performance benchmarking:
+  - OpenACC implementation by Dr. Ziyi Yin (KronosAI)
+  - CUDA implementation by Abdullah Maruf  
+  - Mixed precision CUDA variants (v1, v2, v3)
+* **Comprehensive performance analysis** on A100 GPU hardware
+* **Automated benchmarking** across multiple grid sizes (64³ to 1024³)
+* **Memory usage profiling** and timing analysis
+* **Performance visualizations** and comparative studies
+* **Mixed precision optimization** studies (FP16/FP32)
 
 ---
 
+## Authors & Contributors
+
+- **Dr. Ziyi Yin** (KronosAI) - OpenACC implementation
+- **Abdullah Maruf** - CUDA implementation with A100/TPU/L4 testing
+- **Mixed Precision Team** - FP16/FP32 optimization variants
+
 ## Contributing
 
-Issues and PRs welcome—especially for PML, higher-order stencils, and performance PRs with repro harnesses. See `docs/ROADMAP.md`.
+Issues and PRs welcome for additional optimizations, new architectures, or extended analysis.
 
 ## License
 
